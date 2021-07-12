@@ -1,0 +1,3 @@
+export const SET_BOARD = 'SET_BOARD'
+export const SET_BOARD_LOADING = 'SET_BOARD_LOADING'
+export const SET_BOARD_ERROR = 'SET_BOARD_ERROR'
