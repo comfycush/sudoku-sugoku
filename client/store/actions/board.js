@@ -1,7 +1,9 @@
 import {
   SET_BOARD,
   SET_BOARD_LOADING,
-  SET_BOARD_ERROR
+  SET_BOARD_ERROR,
+  SET_INPUT,
+  SET_STATUS
 } from '../actionTypes'
 
 export function setBoard(input) {
@@ -25,20 +27,27 @@ export function setError(input) {
   }
 }
 
+export function setInput(input) {
+  return {
+    type: SET_INPUT,
+    payload: input
+  }
+}
+
+export function setStatus(input) {
+  return {
+    type: SET_STATUS,
+    payload: input
+  }
+}
+
 export function fetchBoard() {
   return dispatch => {
     dispatch(setLoading(true))
     fetch(`https://sugoku.herokuapp.com/board?difficulty=easy`)
       .then(res => res.json())
       .then(data => {
-        for (let i = 0; i < data.board.length; i++) {
-          for (let j = 0; j < data.board[i].length; j++) {
-            if (data.board[i][j] === 0) {
-              data.board[i][j] = ''
-            }
-          }
-        }
-        dispatch(setBoard(data))
+        dispatch(setBoard(data.board))
       })
       .catch(err => {
         console.log(err)
@@ -46,6 +55,53 @@ export function fetchBoard() {
       })
       .finally(() => {
         dispatch(setLoading(false))
+      })
+  }
+}
+
+const encodeBoard = (board) => board.reduce((result, row, i) => result + `%5B${encodeURIComponent(row)}%5D${i === board.length -1 ? '' : '%2C'}`, '')
+
+const encodeParams = (params) => 
+  Object.keys(params)
+  .map(key => key + '=' + `%5B${encodeBoard(params[key])}%5D`)
+  .join('&');
+
+export function validateBoard(board) {
+  return dispatch => {
+    const data = {board}
+    fetch(`https://sugoku.herokuapp.com/validate`, {
+      method: 'post',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: encodeParams(data)
+    })
+      .then(res => res.json())
+      .then(data => {
+        dispatch(setStatus(data.status))
+      })
+      .catch(err => {
+        console.log(err)
+      })
+  }
+}
+
+export function solveBoard(board) {
+  return dispatch => {
+    const data = {board}
+    fetch(`https://sugoku.herokuapp.com/solve`, {
+      method: 'post',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: encodeParams(data)
+    })
+      .then(res => res.json())
+      .then(data => {
+        dispatch(setBoard(data.solution))
+      })
+      .catch(err => {
+        console.log(err)
       })
   }
 }

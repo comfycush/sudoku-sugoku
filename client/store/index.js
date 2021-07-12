@@ -1,4 +1,4 @@
-import { combineReducers, createStore, applyMiddleware } from 'redux'
+import { combineReducers, createStore, applyMiddleware, compose } from 'redux'
 import thunk from 'redux-thunk'
 import boardReducers from './reducers/board'
 
@@ -6,9 +6,11 @@ const reducers = combineReducers({
   board: boardReducers
 })
 
+const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
+
 const store = createStore(
   reducers,
-  applyMiddleware(thunk)
+  composeEnhancers(applyMiddleware(thunk))
 )
 
 export default store

@@ -1,13 +1,16 @@
 import {
   SET_BOARD,
   SET_BOARD_LOADING,
-  SET_BOARD_ERROR
+  SET_BOARD_ERROR,
+  SET_INPUT,
+  SET_STATUS
 } from '../actionTypes'
 
 const initialState = {
   board: {},
   isLoading: false,
-  isError: false
+  isError: false,
+  status: ''
 }
 
 function boardReducers(state = initialState, action) {
@@ -20,6 +23,11 @@ function boardReducers(state = initialState, action) {
       return { ...state, isLoading: payload }
     case SET_BOARD_ERROR:
       return { ...state, isError: payload }
+    case SET_INPUT:
+      state.board[payload.row][payload.col] = payload.num
+      return{ ...state, board: state.board}
+    case SET_STATUS:
+      return { ...state, status: payload}
     default:
       return state
   }
