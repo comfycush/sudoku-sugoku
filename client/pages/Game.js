@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { fetchBoard, solveBoard, validateBoard } from '../store/actions/board';
+import React, { useEffect, useState } from 'react';
+import { fetchBoard, setDifficultyLevel, setStatus, solveBoard, validateBoard } from '../store/actions/board';
 import { useDispatch, useSelector } from 'react-redux'
 import Board from '../components/Board';
 import {
@@ -11,16 +11,50 @@ import {
   StatusBar,
   ActivityIndicator
 } from 'react-native';
+import { addPlayerList, setPlayer } from '../store/actions/player';
+import { Timer } from 'react-native-stopwatch-timer';
 
-
-export default function Game() {
+export default function Game({ navigation }) {
   const dispatch = useDispatch()
   const board = useSelector(state => state.board.board)
   const isLoading = useSelector(state => state.board.isLoading)
+  const difficulty = useSelector(state => state.board.difficulty)
+  const status = useSelector(state => state.board.status)
+  const playerName = useSelector(state => state.player.name)
+
+  const [isTimerStart, setIsTimerStart] = useState(false);
+  const [timerDuration, setTimerDuration] = useState(600000);
+  let currentTime
 
   useEffect(() => {
-    dispatch(fetchBoard())
-  }, [dispatch])
+    dispatch(fetchBoard(difficulty))
+  }, [dispatch, difficulty])
+
+  useEffect(() => {
+    if (!isLoading) {
+      setIsTimerStart(true)
+    }
+  }, [isLoading])
+
+  useEffect(() => {
+    if (status === 'solved') {
+      // let minutes = Math.floor(Math.round((timerDuration - currentTime) / 1000) / 60)
+      // let seconds = Math.round((timerDuration - currentTime) / 1000) - minutes * 60
+      // let totalTime = ''
+      // console.log(minutes, 'minutesss');
+      // minutes > 0 ? totalTime = `${minutes} m ${seconds} s` : totalTime = `${seconds} s`
+      dispatch(addPlayerList({
+        name: playerName,
+        difficulty: difficulty,
+        time: timerDuration - currentTime,
+      }))
+      setIsTimerStart(false)
+      dispatch(setStatus(''))
+      dispatch(setPlayer(''))
+      dispatch(setDifficultyLevel(''))
+      navigation.navigate('Finish')
+    }
+  }, [status])
 
   const handleValidate = () => {
     dispatch(validateBoard(board))
@@ -34,6 +68,15 @@ export default function Game() {
     <Board rowItems={item} row={index}/>
   )
 
+  function getFormattedTime(time) {
+    currentTime = time
+  }
+
+  function handleTimerOut() {
+    alert("Time is up!")
+    navigation.navigate('Home')
+  }
+
   return (
     <>
       {
@@ -43,6 +86,18 @@ export default function Game() {
           </View>
           :
           <>
+          <View>
+            <Timer
+              totalDuration={timerDuration}
+              msecs
+              start={isTimerStart}
+              options={options}
+              handleFinish={() => {
+                handleTimerOut()
+              }}
+              getMsecs={getFormattedTime}
+            />
+          </View>
           <View style={styles.boardContainer}>
               <FlatList
                 contentContainerStyle={styles.flatListContainer}
@@ -65,7 +120,6 @@ export default function Game() {
           </View>
           </>
       }
-      
     </>
       
   )
@@ -87,8 +141,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'center'
-
+    justifyContent: 'center',
+    backgroundColor: '#fff'
   },
   buttonSubmit: {
     borderColor: 'black',
@@ -100,3 +154,19 @@ const styles = StyleSheet.create({
     padding: 10
   }
 });
+
+const options = {
+  container: {
+    backgroundColor: '#FF0000',
+    padding: 5,
+    borderRadius: 5,
+    width: 200,
+    alignItems: 'center',
+    display: 'hidden'
+  },
+  text: {
+    fontSize: 25,
+    color: '#FFF',
+    marginLeft: 7,
+  },
+};

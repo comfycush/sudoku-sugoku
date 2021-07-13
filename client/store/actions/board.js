@@ -3,7 +3,8 @@ import {
   SET_BOARD_LOADING,
   SET_BOARD_ERROR,
   SET_INPUT,
-  SET_STATUS
+  SET_STATUS,
+  SET_DIFFICULTY_LEVEL
 } from '../actionTypes'
 
 export function setBoard(input) {
@@ -41,10 +42,17 @@ export function setStatus(input) {
   }
 }
 
-export function fetchBoard() {
+export function setDifficultyLevel(input) {
+  return {
+    type: SET_DIFFICULTY_LEVEL,
+    payload: input
+  }
+}
+
+export function fetchBoard(difficulty) {
   return dispatch => {
     dispatch(setLoading(true))
-    fetch(`https://sugoku.herokuapp.com/board?difficulty=easy`)
+    fetch(`https://sugoku.herokuapp.com/board?difficulty=${difficulty}`)
       .then(res => res.json())
       .then(data => {
         dispatch(setBoard(data.board))
@@ -79,6 +87,7 @@ export function validateBoard(board) {
       .then(res => res.json())
       .then(data => {
         dispatch(setStatus(data.status))
+        return data.status
       })
       .catch(err => {
         console.log(err)
@@ -98,7 +107,11 @@ export function solveBoard(board) {
     })
       .then(res => res.json())
       .then(data => {
-        dispatch(setBoard(data.solution))
+        if (data.status === 'unsolvable') {
+          console.log('board is unsolvable');
+        } else {
+          dispatch(setBoard(data.solution))
+        }
       })
       .catch(err => {
         console.log(err)
