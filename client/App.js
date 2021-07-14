@@ -23,7 +23,8 @@ export default function App() {
             options={{
               headerLeft: () => {
                 return null;
-              }
+              },
+              gestureEnabled: false
             }}
           />
         </Stack.Navigator>

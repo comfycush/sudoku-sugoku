@@ -4,12 +4,24 @@ import {
   SET_BOARD_ERROR,
   SET_INPUT,
   SET_STATUS,
-  SET_DIFFICULTY_LEVEL
+  SET_DIFFICULTY_LEVEL,
+  SET_ORIGINAL_BOARD
 } from '../actionTypes'
+import { setAttempts } from './player'
+import store from '..'
+
+const attempts = store.getState().player.attempts
 
 export function setBoard(input) {
   return {
     type: SET_BOARD,
+    payload: input
+  }
+}
+
+export function setOriginalBoard(input) {
+  return {
+    type: SET_ORIGINAL_BOARD,
     payload: input
   }
 }
@@ -56,6 +68,7 @@ export function fetchBoard(difficulty) {
       .then(res => res.json())
       .then(data => {
         dispatch(setBoard(data.board))
+        dispatch(setOriginalBoard(data.board))
       })
       .catch(err => {
         console.log(err)
@@ -87,6 +100,9 @@ export function validateBoard(board) {
       .then(res => res.json())
       .then(data => {
         dispatch(setStatus(data.status))
+        if (data.status !== 'solved') {
+          dispatch(setAttempts(attempts + 1))
+        }
         return data.status
       })
       .catch(err => {

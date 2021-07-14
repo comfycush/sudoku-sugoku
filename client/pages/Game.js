@@ -12,18 +12,20 @@ import {
   ActivityIndicator
 } from 'react-native';
 import { addPlayerList, setPlayer } from '../store/actions/player';
-import { Timer } from 'react-native-stopwatch-timer';
+import { Stopwatch } from 'react-native-stopwatch-timer';
 
-export default function Game({ navigation }) {
+
+export default function Game({ navigation, route }) {
   const dispatch = useDispatch()
   const board = useSelector(state => state.board.board)
   const isLoading = useSelector(state => state.board.isLoading)
-  const difficulty = useSelector(state => state.board.difficulty)
   const status = useSelector(state => state.board.status)
-  const playerName = useSelector(state => state.player.name)
+  const difficulty = route.params.difficulty
+  const playerName = route.params.name
+  const attempts = useSelector(state => state.player.attempts)
 
   const [isTimerStart, setIsTimerStart] = useState(false);
-  const [timerDuration, setTimerDuration] = useState(600000);
+  const [timerReset, setTimerReset] = useState(false)
   let currentTime
 
   useEffect(() => {
@@ -37,24 +39,28 @@ export default function Game({ navigation }) {
   }, [isLoading])
 
   useEffect(() => {
+    // setTimerReset(true)
+    // setIsTimerStart(!isTimerStart)
     if (status === 'solved') {
-      // let minutes = Math.floor(Math.round((timerDuration - currentTime) / 1000) / 60)
-      // let seconds = Math.round((timerDuration - currentTime) / 1000) - minutes * 60
-      // let totalTime = ''
-      // console.log(minutes, 'minutesss');
-      // minutes > 0 ? totalTime = `${minutes} m ${seconds} s` : totalTime = `${seconds} s`
       dispatch(addPlayerList({
         name: playerName,
         difficulty: difficulty,
-        time: timerDuration - currentTime,
+        time: currentTime,
       }))
-      setIsTimerStart(false)
       dispatch(setStatus(''))
       dispatch(setPlayer(''))
       dispatch(setDifficultyLevel(''))
-      navigation.navigate('Finish')
+      navigation.navigate('Finish', {
+        name: playerName
+      })
     }
   }, [status])
+
+  useEffect(() => {
+    if (status !== 'solved' && status !== '') {
+      alert('Invalid board. Please check your board again.')
+    }
+  }, [attempts])
 
   const handleValidate = () => {
     dispatch(validateBoard(board))
@@ -74,65 +80,72 @@ export default function Game({ navigation }) {
 
   function handleTimerOut() {
     alert("Time is up!")
+    setTimerReset(true)
+    setIsTimerStart(false)
     navigation.navigate('Home')
   }
 
+  function handleTimerReset() {
+    setIsTimerStart(!isTimerStart)
+  }
+
   return (
-    <>
+    <View style={{ flex: 1, backgroundColor: '#B5EAEA', justifyContent: 'space-around'}}>
       {
         isLoading ?
-          <View style={styles.boardContainer}>
+          <View style={[styles.boardContainer, styles.fontColorBlack, { backgroundColor: "#EDF6E5" }]}>
             <ActivityIndicator size="large" />
           </View>
           :
-          <>
-          <View>
-            <Timer
-              totalDuration={timerDuration}
-              msecs
-              start={isTimerStart}
-              options={options}
-              handleFinish={() => {
-                handleTimerOut()
-              }}
-              getMsecs={getFormattedTime}
-            />
-          </View>
-          <View style={styles.boardContainer}>
-              <FlatList
-                contentContainerStyle={styles.flatListContainer}
-                data={board}
-                keyExtractor={(item, index) => index.toString()}
-                renderItem={renderItem}
+          <View >
+            <View style={{ alignItems: 'center'}}>
+              <Stopwatch
+                style={{ marginBottom: 50}}
+                reset={timerReset}
+                msecs
+                start={isTimerStart}
+                options={options}
+                handleFinish={() => {
+                    handleTimerOut()
+                }}
+                getMsecs={getFormattedTime}
               />
-          </View>
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              onPress={() => handleSolve()}
-              style={styles.buttonSubmit}>
-              <Text style={styles.buttonText}>Solve Board</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => handleValidate()}
-              style={styles.buttonSubmit}>
-              <Text style={styles.buttonText}>Validate Board</Text>
-            </TouchableOpacity>
-          </View>
-          </>
+                <FlatList
+                  contentContainerStyle={styles.flatListContainer}
+                  data={board}
+                  keyExtractor={(item, index) => index.toString()}
+                  renderItem={renderItem}
+                />
+              <View style={{ }}>
+                <TouchableOpacity
+                  onPress={() => handleSolve()}
+                  style={styles.buttonSubmit}>
+                  <Text style={[styles.buttonText, styles.fontColorBlack]}>Solve Board</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => handleValidate()}
+                  style={styles.buttonSubmit}>
+                  <Text style={[styles.buttonText, styles.fontColorBlack]}>Validate Board</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+        </View>
       }
-    </>
+    </View>
       
   )
 }
 
 const styles = StyleSheet.create({
+  fontColorBlack: {
+    color: '#444444'
+  },
   flatListContainer: {
-    flexGrow: 1,
-    justifyContent: 'center'
+    justifyContent: 'center',
+    marginVertical: 50,
   },
   boardContainer: {
     flex: 2,
-    marginTop: StatusBar.currentHeight || 0,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#fff'
@@ -148,16 +161,19 @@ const styles = StyleSheet.create({
     borderColor: 'black',
     borderWidth: 4,
     borderRadius: 9999,
-    marginHorizontal: 10
+    marginVertical: 10,
+    backgroundColor: '#EDF6E5',
+    alignItems: 'center'
   },
   buttonText: {
-    padding: 10
+    padding: 10,
+    fontWeight: 'bold'
   }
 });
 
 const options = {
   container: {
-    backgroundColor: '#FF0000',
+    backgroundColor: '#F38BA0',
     padding: 5,
     borderRadius: 5,
     width: 200,

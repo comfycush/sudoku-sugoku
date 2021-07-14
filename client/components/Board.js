@@ -4,11 +4,13 @@ import { setInput } from '../store/actions/board'
 import { 
   View,
   TextInput,
-  StyleSheet
- } from 'react-native'
+  StyleSheet,
+  Dimensions
+} from 'react-native'
+import { useSelector } from 'react-redux'
 
 const Board = ({ rowItems, row }) => {
-
+  const originalBoard = useSelector(state => state.board.originalBoard)
   const dispatch = useDispatch()
 
   function handleChangeNumber(num, indexCol) {
@@ -24,50 +26,37 @@ const Board = ({ rowItems, row }) => {
     <View style={{ flexDirection: 'row' }}>
       {
         rowItems.map((e, col) => {
-          if (e !== 0) {
             return (
-              <TextInput 
-              key={col}
-              value={e.toString()}
-              style={
-                row == 2 || row == 5 ?
-                    col == 2 || col == 5 ?
-                      [styles.rightBorderThick, styles.bottomBorderThick]
-                      :
-                      styles.bottomBorderThick
-                    :
-                    col == 2 || col == 5 ?
-                      styles.rightBorderThick
-                      :
-                      styles.borderRegular
-                }
-              editable={false}
-              selectTextOnFocus={true}
-            />
-            )
-          } else {
-            return (
-              <TextInput 
-                key={col}
-                keyboardType="numeric"
+              <View
                 style={
-                  row == 2 || row == 5 ?
-                    col == 2 || col == 5 ?
-                      [styles.rightBorderThick, styles.bottomBorderThick]
+                    originalBoard[row][col] === 0 ?
+                      styles.editable
                       :
-                      styles.bottomBorderThick
-                    :
+                      styles.fixed}
+                key={col}
+                >
+                <TextInput 
+                  
+                  keyboardType="numeric"
+                  value={e === 0 ? '' : e.toString()}
+                  style={[
+                    styles.col,
+                    styles.text,
                     col == 2 || col == 5 ?
                       styles.rightBorderThick
                       :
+                      styles.borderRegular,
+                    row == 2 || row == 5 ?
+                      styles.bottomBorderThick
+                      :
                       styles.borderRegular
-                }
-                onChangeText={num => handleChangeNumber(num, col)}
-                editable={true}
-                maxLength={1}
-              />
+                  ]}
+                  onChangeText={num => handleChangeNumber(num, col)}
+                  editable={originalBoard[row][col] === 0}
+                  maxLength={1}
+                />
+              </View>
             )
-          }
         })
       }
     </View>
@@ -77,24 +66,33 @@ const Board = ({ rowItems, row }) => {
 export default Board
 
 const styles = StyleSheet.create({
- bottomBorderThick: {
-   borderBottomWidth: 3,
-   borderWidth: 1,
-   width: 35,
-   height: 35,
-   textAlign: 'center'
- },
- rightBorderThick: {
-   borderRightWidth: 3,
-   borderWidth: 1,
-   width: 35,
-   height: 35,
-   textAlign: 'center'
- },
- borderRegular: {
-   borderWidth: 1,
-   width: 35,
-   height: 35,
-   textAlign: 'center'
- }
+  col: {
+    width: Dimensions.get('screen').width * 0.1,
+    height: Dimensions.get('screen').width * 0.1,
+    textAlign: 'center',
+    borderWidth: 1,
+  },
+  fixed: {
+    backgroundColor: '#FFBCBC'
+  },
+  editable: {
+    backgroundColor: '#fff'
+  },
+  bottomBorderThick: {
+    borderBottomWidth: 4,
+    textAlign: 'center'
+  },
+  rightBorderThick: {
+    borderRightWidth: 4,
+    textAlign: 'center'
+  },
+  BottomBorderRegular: {
+    textAlign: 'center'
+  },
+  rightBorderRegular: {
+    textAlign: 'center'
+  },
+  text: {
+    fontWeight: "bold"
+  }
 })
